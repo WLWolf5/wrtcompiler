@@ -31,7 +31,6 @@ sed -i "s/2.openwrt.pool.ntp.org/cn.pool.ntp.org/g" package/base-files/files/bin
 
 # Openwrt扩展软件包
 #git clone https://github.com/kiddin9/openwrt-packages.git package/openwrt-packages
-mkdir package/openwrt-packages
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-vlmcsd package/openwrt-packages/luci-app-vlmcsd
 svn co https://github.com/kiddin9/openwrt-packages/trunk/vlmcsd package/openwrt-packages/vlmcsd
 svn co https://github.com/openwrt/luci/trunk/applications/luci-app-nlbwmon package/openwrt-packages/luci-app-nlbwmon
@@ -39,6 +38,7 @@ svn co https://github.com/coolsnowwolf/packages/trunk/net/nlbwmon package/openwr
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-fileassistant package/openwrt-packages/luci-app-fileassistant
 svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-zerotier package/openwrt-packages/luci-app-zerotier
 svn co https://github.com/immortalwrt/packages/trunk/net/zerotier package/openwrt-packages/zerotier
+svn co https://github.com/kiddin9/openwrt-packages/trunk/fullconenat-nft package/openwrt-packages/fullconenat-nft
 # 扩展软件包冲突处理
 #rm -rf package/openwrt-packages/miniupnpd
 #rm -rf package/openwrt-packages/miniupnpd-nft
