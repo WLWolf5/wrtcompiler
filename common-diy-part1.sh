@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo -E apt -qq update p7zip
 # 修复Package/Makefile编译错误
 sed -i s#system/opkg#opkg#g package/Makefile
 # 本机预设

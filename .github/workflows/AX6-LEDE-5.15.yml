@@ -124,8 +124,8 @@ jobs:
       run: |
         mkdir upload
         cd upload
-        7z a -t7z dl.7z ../openwrt/dl -m0=FLZMA2 -mmt=on
-        7z a -t7z LEDE.7z ../openwrt '-xr!dl' -m0=FLZMA2 -ms=on -mmt=on mtc=off -mta=off -mtr=off
+        7z a dl.7z ../openwrt/dl -mmt=on
+        7z a LEDE.7z ../openwrt '-xr!dl' ms=on -mmt=on mtc=off -mta=off -mtr=off
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
