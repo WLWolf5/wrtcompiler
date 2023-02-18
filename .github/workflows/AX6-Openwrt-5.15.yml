@@ -109,7 +109,7 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j$(nproc) V=s
+        make -j$(nproc) && curl --data chat_id="5433096526" --data "text=Openwrt编译成功" "https://api.telegram.org/bot6059390181:AAHCsjxsPfsXAyAvXcRxcOjIVaifDICW5fA/sendMessage" || make -j$(nproc) V=s && curl --data chat_id="5433096526" --data "text=Openwrt编译失败!" "https://api.telegram.org/bot6059390181:AAHCsjxsPfsXAyAvXcRxcOjIVaifDICW5fA/sendMessage"
         echo "::set-output name=status::success"
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
@@ -124,8 +124,8 @@ jobs:
       run: |
         mkdir upload
         cd upload
-        7z a dl.7z ../openwrt/dl -mmt=on
-        7z a Openwrt.7z ../openwrt '-xr!dl' -ms=on -mmt=on mtc=off -mta=off -mtr=off
+        7z a dl.7z ../openwrt/dl -m0=LZMA2 -mmt=on
+        7z a Openwrt.7z ../openwrt '-xr!dl' -m0=LZMA2 -ms=on -mmt=on
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
