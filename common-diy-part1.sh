@@ -1,14 +1,13 @@
 #!/bin/bash
 
-sudo apt update p7zip
-
 # 修复Package/Makefile编译错误
 sed -i s#system/opkg#opkg#g package/Makefile
 # 本机预设
 #svn co https://github.com/WLWolf5/wrtcompiler/trunk/config files
 # 个人Patch
 #svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch
-cp -f patch/104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch package/kernel/mac80211/patches/ath11k
+curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch
+mv 104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch package/kernel/mac80211/patches/ath11k/104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch
 # 设置为schedutil调度(根据内核修改版本)
 sed -i '/CONFIG_CPU_FREQ_GOV_ONDEMAND=y/a\CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y' target/linux/ipq807x/config-5.15
 sed -i 's/# CONFIG_CPU_FREQ_GOV_POWERSAVE is not set/CONFIG_CPU_FREQ_GOV_POWERSAVE=y/g' target/linux/ipq807x/config-5.15

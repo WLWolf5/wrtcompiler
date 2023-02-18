@@ -9,8 +9,11 @@ sed -i 's/# CONFIG_CPU_FREQ_STAT is not set/CONFIG_CPU_FREQ_STAT=y/g' target/lin
 sed -i 's|pcdata(boardinfo.system or "?")|luci.sys.exec("uname -m") or "?"|g' feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
 sed -i 's/or "1"%>/or "1"%> ( <%=luci.sys.exec("expr `cat \/sys\/class\/thermal\/thermal_zone0\/temp` \/ 1000") or "?"%> \&#8451; ) /g' feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
 
-cp -f ../patch/mac80211.sh package/kernel/mac80211/files/lib/wifi
-cp -f ../patch/boos-ath.mk package/kernel/mac80211
+rm -rf package/feeds/packages/net/miniupnpd
+curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/boos-ath.mk
+curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/mac80211.sh
+mv -f mac80211.sh package/kernel/mac80211/files/lib/wifi/mac80211.sh
+mv -f boos-ath.mk package/kernel/mac80211/ath.mk
 svn co https://github.com/coolsnowwolf/lede/trunk/package/qca/nss/qca-nss-ecm-64 package/qca/nss/qca-nss-ecm-64
 svn co https://github.com/coolsnowwolf/lede/trunk/package/qca/nss/qca-nss-drv-64 package/qca/nss/qca-nss-drv-64
 svn co https://github.com/coolsnowwolf/lede/trunk/package/qca/nss/qca-nss-clients-64 package/qca/nss/qca-nss-clients-64
