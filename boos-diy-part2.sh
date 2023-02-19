@@ -10,6 +10,7 @@ sed -i 's|pcdata(boardinfo.system or "?")|luci.sys.exec("uname -m") or "?"|g' fe
 sed -i 's/or "1"%>/or "1"%> ( <%=luci.sys.exec("expr `cat \/sys\/class\/thermal\/thermal_zone0\/temp` \/ 1000") or "?"%> \&#8451; ) /g' feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
 
 rm -rf feeds/packages/net/miniupnpd
+svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/boos-ath.mk
 curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/mac80211.sh
 mv -f mac80211.sh package/kernel/mac80211/files/lib/wifi/mac80211.sh
