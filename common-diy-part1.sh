@@ -33,6 +33,7 @@ cp -f sysctl-tcp-bbr2.conf package/kernel/linux/files
 svn co https://github.com/QiuSimons/YAOF/trunk/PATCH/BBRv2/kernel tcp-bbr2
 rm -rf tcp-bbr2/.svn
 rm -rf tcp-bbr2/693-08-net-tcp_bbr-v2-introduce-ca_ops-skb_marked_lost-CC-m.patch
+rm -rf tcp-bbr2/693-14-net-tcp-re-generalize-TSO-sizing-in-TCP-CC-module-AP.patch
 #package/kernel/linux/modules/netsupport.mk添加bbr2支持
 wget -qO - https://github.com/openwrt/openwrt/commit/7db9763.patch | patch -p1
 
