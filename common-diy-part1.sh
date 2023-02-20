@@ -6,8 +6,7 @@ sed -i s#system/opkg#opkg#g package/Makefile
 #svn co https://github.com/WLWolf5/wrtcompiler/trunk/config files
 # 个人Patch
 #svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch
-curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch
-mv 104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch package/kernel/mac80211/patches/ath11k/104-RFC-ath11k-fix-peer-addition-deletion-error-on-sta-band-migration.patch
+
 # 设置为schedutil调度(根据内核修改版本)
 sed -i '/CONFIG_CPU_FREQ_GOV_ONDEMAND=y/a\CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y' target/linux/ipq807x/config-5.15
 sed -i 's/# CONFIG_CPU_FREQ_GOV_POWERSAVE is not set/CONFIG_CPU_FREQ_GOV_POWERSAVE=y/g' target/linux/ipq807x/config-5.15
@@ -18,6 +17,24 @@ sed -i '/customized in this file/a net.netfilter.nf_conntrack_max=65535' package
 sed -i "s/0.openwrt.pool.ntp.org/ntp.aliyun.com/g" package/base-files/files/bin/config_generate
 sed -i "s/1.openwrt.pool.ntp.org/cn.ntp.org.cn/g" package/base-files/files/bin/config_generate
 sed -i "s/2.openwrt.pool.ntp.org/cn.pool.ntp.org/g" package/base-files/files/bin/config_generate
+
+# 优化
+
+#不知道什么优化
+sed -i 's/Os/O2 -Wl,--gc-sections/g' include/target.mk
+#改动toolchain/musl/common.mk
+wget -qO - https://github.com/openwrt/openwrt/commit/8249a8c.patch | patch -p1
+# fstool patch
+wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
+
+#TCP BBRv2
+curl -LO https://raw.githubusercontent.com/QiuSimons/YAOF/22.03/PATCH/BBRv2/openwrt/package/kernel/linux/files/sysctl-tcp-bbr2.conf
+cp -f sysctl-tcp-bbr2.conf package/kernel/linux/files
+svn co https://github.com/QiuSimons/YAOF/trunk/PATCH/BBRv2/kernel tcp-bbr2
+rm -rf tcp-bbr2/.svn
+#package/kernel/linux/modules/netsupport.mk添加bbr2支持
+wget -qO - https://github.com/openwrt/openwrt/commit/7db9763.patch | patch -p1
+
 
 # 修改默认主机名
 #sed -i 's/OpenWrt/Redmi-AX6/g' package/base-files/files/bin/config_generate
@@ -31,14 +48,14 @@ sed -i "s/2.openwrt.pool.ntp.org/cn.pool.ntp.org/g" package/base-files/files/bin
 #git clone https://github.com/kiddin9/openwrt-packages.git package/openwrt-packages
 
 # 扩展软件包冲突处理
+rm -rf feeds/packages/net/miniupnpd
+svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 #rm -rf package/openwrt-packages/miniupnpd
 #rm -rf package/openwrt-packages/miniupnpd-nft
 #rm -rf package/openwrt-packages/miniupnpd-iptables
 #rm -rf package/openwrt-packages/.github/diy/packages/miniupnpd-iptables
 #rm -rf package/openwrt-packages/firewall
 #rm -rf package/openwrt-packages/shortcut-fe
-#rm -rf package/packages/net/miniupnpd
-#svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd package/openwrt-packages/miniupnpd
 
 #Custom Theme
 #svn co https://github.com/harry3633/openwrt-package/trunk/lienol/luci-theme-bootstrap-mod package/openwrt-packages/luci-theme-bootstrap-mod
