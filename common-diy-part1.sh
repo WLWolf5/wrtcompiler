@@ -23,7 +23,7 @@ sed -i "s/2.openwrt.pool.ntp.org/cn.pool.ntp.org/g" package/base-files/files/bin
 #不知道什么优化
 sed -i 's/Os/O2 -Wl,--gc-sections/g' include/target.mk
 #改动toolchain/musl/common.mk
-#wget -qO - https://github.com/openwrt/openwrt/commit/8249a8c.patch | patch -p1
+wget -qO - https://github.com/openwrt/openwrt/commit/8249a8c.patch | patch -p1
 # fstool patch
 wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
 
@@ -32,6 +32,7 @@ curl -LO https://raw.githubusercontent.com/QiuSimons/YAOF/22.03/PATCH/BBRv2/open
 cp -f sysctl-tcp-bbr2.conf package/kernel/linux/files
 svn co https://github.com/QiuSimons/YAOF/trunk/PATCH/BBRv2/kernel tcp-bbr2
 rm -rf tcp-bbr2/.svn
+rm -rf tcp-bbr2/693-08-net-tcp_bbr-v2-introduce-ca_ops-skb_marked_lost-CC-m.patch
 #package/kernel/linux/modules/netsupport.mk添加bbr2支持
 wget -qO - https://github.com/openwrt/openwrt/commit/7db9763.patch | patch -p1
 

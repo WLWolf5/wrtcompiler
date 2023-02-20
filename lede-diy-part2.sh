@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 设置为schedutil调度(根据内核修改版本)
-sed -i '/CONFIG_CPU_FREQ_GOV_ONDEMAND=y/a\CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y' target/linux/ipq807x/config-5.10
-sed -i 's/# CONFIG_CPU_FREQ_GOV_POWERSAVE is not set/CONFIG_CPU_FREQ_GOV_POWERSAVE=y/g' target/linux/ipq807x/config-5.10
-sed -i 's/# CONFIG_CPU_FREQ_STAT is not set/CONFIG_CPU_FREQ_STAT=y/g' target/linux/ipq807x/config-5.10
+sed -i '/CONFIG_CPU_FREQ_GOV_ONDEMAND=y/a\CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y' target/linux/ipq807x/config-5.15
+sed -i 's/# CONFIG_CPU_FREQ_GOV_POWERSAVE is not set/CONFIG_CPU_FREQ_GOV_POWERSAVE=y/g' target/linux/ipq807x/config-5.15
+sed -i 's/# CONFIG_CPU_FREQ_STAT is not set/CONFIG_CPU_FREQ_STAT=y/g' target/linux/ipq807x/config-5.15
 
 # 添加核心温度的显示
 sed -i 's|pcdata(boardinfo.system or "?")|luci.sys.exec("uname -m") or "?"|g' feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
@@ -23,7 +23,7 @@ rm -rf MG-LRU/.svn
 cp -f MG-LRU/* target/linux/generic/pending-5.10
 
 #TCP BBRv2
-cp -f tcp-bbr2/* target/linux/generic/hack-5.10
+cp -f tcp-bbr2/* target/linux/generic/hack-5.15
 
 #Linux Ramdom Number Generator
 svn co https://github.com/QiuSimons/YAOF/trunk/PATCH/LRNG
@@ -46,3 +46,6 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/fullconenat-nft package
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ddns-scripts_aliyun package/openwrt-packages/ddns-scripts_aliyun
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ddns-scripts_dnspod package/openwrt-packages/ddns-scripts_dnspod
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/openwrt-packages/luci-app-dnsproxy
+svn co https://github.com/kiddin9/openwrt-packages/trunk/udp2raw package/openwrt-packages/udp2raw
+git clone https://github.com/0xACE8/luci-app-udp2raw.git package/openwrt-packages/luci-app-udp2raw
+
