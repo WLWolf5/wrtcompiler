@@ -9,7 +9,8 @@ cp -f tcp-bbr2/* target/linux/generic/hack-5.15
 
 #TCP流量优化
 #wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/780-v5.17-tcp-defer-skb-freeing-after-socket-lock-is-released.patch -P target/linux/generic/backport-5.15
-#wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/tcp.c -P build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92
+#rm -rf build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4/tcp.c
+#wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/tcp.c -P build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4
 
 # Openwrt扩展软件包
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-vlmcsd package/openwrt-packages/luci-app-vlmcsd
@@ -23,3 +24,7 @@ svn co https://github.com/kiddin9/openwrt-packages/trunk/fullconenat-nft package
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ddns-scripts_aliyun package/openwrt-packages/ddns-scripts_aliyun
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ddns-scripts_dnspod package/openwrt-packages/ddns-scripts_dnspod
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/openwrt-packages/luci-app-dnsproxy
+
+svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch/nss/qca-nss-crypto package/openwrt-packages/qca-nss-crypto
+svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch/nss/qca-nss-cfi package/openwrt-packages/qca-nss-cfi
+svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch/nss/qca-nss-drv package/openwrt-packages/qca-nss-drv

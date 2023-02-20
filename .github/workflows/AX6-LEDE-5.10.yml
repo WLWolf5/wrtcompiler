@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build AX6 LEDE (K5.15)
+name: Build AX6 LEDE (K5.10)
 
 on:
   repository_dispatch:
@@ -26,10 +26,10 @@ env:
   REPO_URL: https://github.com/cathgao/openwrt
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: AX6-LEDE-5.15.config
+  CONFIG_FILE: AX6-LEDE-5.10.config
   DIY_P1_SH: common-diy-part1.sh
   DIY_P2_SH: lede-diy-part2.sh
-  UPLOAD_BIN_DIR: true
+  UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: false
   UPLOAD_WETRANSFER: false
@@ -124,7 +124,8 @@ jobs:
       run: |
         mkdir upload
         cd upload
-        7z a dl.7z ../openwrt/dl -m0=LZMA2 -mmt=on
+        7z a dl.7z ../openwrt/dl -m0=LZMA2 -mmt=on
+
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
