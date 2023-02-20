@@ -23,7 +23,7 @@ rm -rf MG-LRU/.svn
 cp -f MG-LRU/* target/linux/generic/pending-5.10
 
 #TCP BBRv2
-cp -f tcp-bbr2/* target/linux/generic/hack-5.10
+#cp -f tcp-bbr2/* target/linux/generic/hack-5.10
 
 #Linux Ramdom Number Generator
 svn co https://github.com/QiuSimons/YAOF/trunk/PATCH/LRNG
