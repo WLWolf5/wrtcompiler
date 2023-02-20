@@ -23,6 +23,7 @@ rm -rf MG-LRU/.svn
 cp -f MG-LRU/* target/linux/generic/pending-5.10
 
 #TCP BBRv2
+rm -rf tcp-bbr2/693-14-net-tcp-re-generalize-TSO-sizing-in-TCP-CC-module-AP.patch
 cp -f tcp-bbr2/* target/linux/generic/hack-5.10
 
 #Linux Ramdom Number Generator
