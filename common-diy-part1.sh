@@ -49,8 +49,6 @@ wget -qO - https://github.com/openwrt/openwrt/commit/7db9763.patch | patch -p1
 #git clone https://github.com/kiddin9/openwrt-packages.git package/openwrt-packages
 
 # 扩展软件包冲突处理
-rm -rf feeds/packages/net/miniupnpd
-svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 #rm -rf package/openwrt-packages/miniupnpd
 #rm -rf package/openwrt-packages/miniupnpd-nft
 #rm -rf package/openwrt-packages/miniupnpd-iptables

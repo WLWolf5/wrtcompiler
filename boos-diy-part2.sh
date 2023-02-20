@@ -45,6 +45,9 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/qca/nss/qca-nss-drv-64
 svn co https://github.com/coolsnowwolf/lede/trunk/package/qca/nss/qca-nss-clients-64 package/qca/nss/qca-nss-clients-64
 cp -f ../patch/boos-ecm64-Makefile package/qca/nss/qca-nss-ecm-64/Makefile
 
+#替换默认miniupnp
+rm -rf feeds/packages/net/miniupnpd
+svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 
 # Openwrt扩展软件包
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-vlmcsd package/openwrt-packages/luci-app-vlmcsd

@@ -12,6 +12,10 @@ cp -f tcp-bbr2/* target/linux/generic/hack-5.15
 #rm -rf build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4/tcp.c
 #wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/tcp.c -P build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4
 
+#替换默认miniupnp
+rm -rf feeds/packages/net/miniupnpd
+svn co https://github.com/x-wrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
+
 # Openwrt扩展软件包
 svn co https://github.com/kiddin9/openwrt-packages/trunk/luci-app-vlmcsd package/openwrt-packages/luci-app-vlmcsd
 svn co https://github.com/kiddin9/openwrt-packages/trunk/vlmcsd package/openwrt-packages/vlmcsd
