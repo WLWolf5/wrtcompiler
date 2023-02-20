@@ -23,7 +23,7 @@ sed -i "s/2.openwrt.pool.ntp.org/cn.pool.ntp.org/g" package/base-files/files/bin
 #不知道什么优化
 sed -i 's/Os/O2 -Wl,--gc-sections/g' include/target.mk
 #改动toolchain/musl/common.mk
-wget -qO - https://github.com/openwrt/openwrt/commit/8249a8c.patch | patch -p1
+#wget -qO - https://github.com/openwrt/openwrt/commit/8249a8c.patch | patch -p1
 # fstool patch
 wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
 
