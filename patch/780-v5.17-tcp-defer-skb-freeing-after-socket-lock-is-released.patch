@@ -110,6 +110,21 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  int tcp_filter(struct sock *sk, struct sk_buff *skb);
  void tcp_set_state(struct sock *sk, int state);
  void tcp_done(struct sock *sk);
+@@ -3126,7 +3094,6 @@ int tcp_disconnect(struct sock *sk, int flags)
+ 		sk->sk_frag.offset = 0;
+ 	}
+ 
++    sk_defer_free_flush(sk);
+ 	sk_error_report(sk);
+ 	return 0;
+@@ -4255,7 +4222,6 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
+ 		err = BPF_CGROUP_RUN_PROG_GETSOCKOPT_KERN(sk, level, optname,
+ 							  &zc, &len, err);
+ 		release_sock(sk);
++        sk_defer_free_flush(sk);
+ 		if (len >= offsetofend(struct tcp_zerocopy_receive, msg_flags))
+ 			goto zerocopy_rcv_cmsg;
+ 		switch (len) { 
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
 @@ -2060,6 +2060,7 @@ process:
