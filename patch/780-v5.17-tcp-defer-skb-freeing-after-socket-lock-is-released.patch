@@ -110,21 +110,77 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  int tcp_filter(struct sock *sk, struct sk_buff *skb);
  void tcp_set_state(struct sock *sk, int state);
  void tcp_done(struct sock *sk);
-@@ -3126,7 +3094,6 @@ int tcp_disconnect(struct sock *sk, int flags)
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -1588,6 +1588,36 @@ void tcp_cleanup_rbuf(struct sock *sk, i
+ 		tcp_send_ack(sk);
+ }
+ 
++void __sk_defer_free_flush(struct sock *sk)
++{
++	struct llist_node *head;
++	struct sk_buff *skb, *n;
++
++	head = llist_del_all(&sk->defer_list);
++	llist_for_each_entry_safe(skb, n, head, ll_node) {
++		prefetch(n);
++		skb_mark_not_on_list(skb);
++		__kfree_skb(skb);
++	}
++}
++EXPORT_SYMBOL(__sk_defer_free_flush);
++
++static void tcp_eat_recv_skb(struct sock *sk, struct sk_buff *skb)
++{
++	__skb_unlink(skb, &sk->sk_receive_queue);
++	if (likely(skb->destructor == sock_rfree)) {
++		sock_rfree(skb);
++		skb->destructor = NULL;
++		skb->sk = NULL;
++		if (!skb_queue_empty(&sk->sk_receive_queue) ||
++		    !llist_empty(&sk->defer_list)) {
++			llist_add(&skb->ll_node, &sk->defer_list);
++			return;
++		}
++	}
++	__kfree_skb(skb);
++}
++
+ static struct sk_buff *tcp_recv_skb(struct sock *sk, u32 seq, u32 *off)
+ {
+ 	struct sk_buff *skb;
+@@ -2241,6 +2271,7 @@ int tcp_recvmsg(struct sock *sk, struct
+ 			release_sock(sk);
+ 			lock_sock(sk);
+ 		} else {
++			sk_defer_free_flush(sk);
+ 			sk_wait_data(sk, &timeo, last);
+ 		}
+ 
+@@ -2329,6 +2360,7 @@ found_fin_ok:
+ 	tcp_cleanup_rbuf(sk, copied);
+ 
+ 	release_sock(sk);
++	sk_defer_free_flush(sk);
+ 
+ 	if (cmsg_flags) {
+ 		if (cmsg_flags & 2)
+@@ -3094,6 +3126,7 @@ int tcp_disconnect(struct sock *sk, int flags)
  		sk->sk_frag.offset = 0;
  	}
  
 +    sk_defer_free_flush(sk);
  	sk_error_report(sk);
  	return 0;
-@@ -4255,7 +4222,6 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
+ }
+@@ -4222,6 +4255,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
  		err = BPF_CGROUP_RUN_PROG_GETSOCKOPT_KERN(sk, level, optname,
  							  &zc, &len, err);
  		release_sock(sk);
 +        sk_defer_free_flush(sk);
  		if (len >= offsetofend(struct tcp_zerocopy_receive, msg_flags))
  			goto zerocopy_rcv_cmsg;
- 		switch (len) { 
+ 		switch (len) {
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
 @@ -2060,6 +2060,7 @@ process:
