@@ -5,7 +5,7 @@ sed -i 's|pcdata(boardinfo.system or "?")|luci.sys.exec("uname -m") or "?"|g' fe
 sed -i 's/or "1"%>/or "1"%> ( <%=luci.sys.exec("expr `cat \/sys\/class\/thermal\/thermal_zone0\/temp` \/ 1000") or "?"%> \&#8451; ) /g' feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
 
 #TCP-BBRv2
-cp -f tcp-bbr2/* target/linux/generic/hack-5.15
+#cp -f tcp-bbr2/* target/linux/generic/hack-5.15
 
 #TCP流量优化
 #wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/780-v5.17-tcp-defer-skb-freeing-after-socket-lock-is-released.patch -P target/linux/generic/backport-5.15
