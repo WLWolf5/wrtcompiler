@@ -8,9 +8,8 @@ sed -i 's/or "1"%>/or "1"%> ( <%=luci.sys.exec("expr `cat \/sys\/class\/thermal\
 #cp -f tcp-bbr2/* target/linux/generic/hack-5.15
 
 #TCP流量优化
-#wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/780-v5.17-tcp-defer-skb-freeing-after-socket-lock-is-released.patch -P target/linux/generic/backport-5.15
-#rm -rf build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4/tcp.c
-#wget https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/tcp.c -P build_dir/target-aarch64_cortex-a53_musl/linux-ipq807x_generic/linux-5.15.92/net/ipv4
+curl -LO https://raw.githubusercontent.com/WLWolf5/wrtcompiler/master/patch/780-v5.17-tcp-defer-skb-freeing-after-socket-lock-is-released.patch
+cp -f 780-v5.17-tcp-defer-skb-freeing-after-socket-lock-is-released.patch target/linux/generic/backport-5.15
 
 #替换默认miniupnp
 rm -rf feeds/packages/net/miniupnpd
