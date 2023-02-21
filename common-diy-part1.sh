@@ -36,6 +36,7 @@ rm -rf tcp-bbr2/693-08-net-tcp_bbr-v2-introduce-ca_ops-skb_marked_lost-CC-m.patc
 rm -rf tcp-bbr2/693-14-net-tcp-re-generalize-TSO-sizing-in-TCP-CC-module-AP.patch
 rm -rf tcp-bbr2/693-16-net-tcp_bbr-v2-BBRv2-bbr2-congestion-control-for-Lin.patch
 rm -rf tcp-bbr2/693-17-net-tcp_bbr-v2-remove-unnecessary-rs.delivered_ce-lo.patch
+rm -rf tcp-bbr2/693-18-net-tcp_bbr-v2-remove-field-bw_rtts-that-is-unused-i.patch
 #package/kernel/linux/modules/netsupport.mk添加bbr2支持
 wget -qO - https://github.com/openwrt/openwrt/commit/7db9763.patch | patch -p1
 
