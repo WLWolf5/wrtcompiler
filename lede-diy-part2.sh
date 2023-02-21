@@ -53,3 +53,9 @@ git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/openwrt
 svn co https://github.com/kiddin9/openwrt-packages/trunk/udp2raw package/openwrt-packages/udp2raw
 git clone https://github.com/0xACE8/luci-app-udp2raw.git package/openwrt-packages/luci-app-udp2raw
 
+
+rm -rf package/qca/nss/qca-nss-cfi
+rm -rf package/qca/nss/qca-nss-crypto
+svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch/nss/qca-nss-crypto package/openwrt-packages/qca-nss-crypto
+svn co https://github.com/WLWolf5/wrtcompiler/trunk/patch/nss/qca-nss-cfi package/openwrt-packages/qca-nss-cfi
+
