@@ -1,0 +1,261 @@
+From 5a767215a7e128cea1329d125e28cfc2f819cd6f Mon Sep 17 00:00:00 2001
+From: Neal Cardwell <ncardwell@google.com>
+Date: Tue, 11 Jun 2019 12:54:22 -0400
+Subject: [PATCH 16/21] net-tcp_bbr: v2: BBRv2 ("bbr2") congestion control for
+ Linux TCP
+
+BBR v2 is an enhacement to the BBR v1 algorithm. It's designed to aim for lower
+queues, lower loss, and better Reno/CUBIC coexistence than BBR v1.
+
+BBR v2 maintains the core of BBR v1: an explicit model of the network
+path that is two-dimensional, adapting to estimate the (a) maximum
+available bandwidth and (b) maximum safe volume of data a flow can
+keep in-flight in the network. It maintains the estimated BDP as a
+core guide for estimating an appropriate level of in-flight data.
+
+BBR v2 makes several key enhancements:
+
+o Its bandwidth-probing time scale is adapted, within bounds, to allow improved
+coexistence with Reno and CUBIC. The bandwidth-probing time scale is (a)
+extended dynamically based on estimated BDP to improve coexistence with
+Reno/CUBIC; (b) bounded by an interactive wall-clock time-scale to be more
+scalable and responsive than Reno and CUBIC.
+
+o Rather than being largely agnostic to loss and ECN marks, it explicitly uses
+loss and (DCTCP-style) ECN signals to maintain its model.
+
+o It aims for lower losses than v1 by adjusting its model to attempt to stay
+within loss rate and ECN mark rate bounds (loss_thresh and ecn_thresh,
+respectively).
+
+o It adapts to loss/ECN signals even when the application is running out of
+data ("application-limited"), in case the "application-limited" flow is also
+"network-limited" (the bw and/or inflight available to this flow is lower than
+previously estimated when the flow ran out of data).
+
+o It has a three-part model: the model explicit three tracks operating points,
+where an operating point is a tuple: (bandwidth, inflight). The three operating
+points are:
+
+  o latest:        the latest measurement from the current round trip
+  o upper bound:   robust, optimistic, long-term upper bound
+  o lower bound:   robust, conservative, short-term lower bound
+
+These are stored in the following state variables:
+
+  o latest:  bw_latest, inflight_latest
+  o lo:      bw_lo,     inflight_lo
+  o hi:      bw_hi[2],  inflight_hi
+
+To gain intuition about the meaning of the three operating points, it
+may help to consider the analogs in CUBIC, which has a somewhat
+analogous three-part model used by its probing state machine:
+
+  BBR param     CUBIC param
+  -----------   -------------
+  latest     ~  cwnd
+  lo         ~  ssthresh
+  hi         ~  last_max_cwnd
+
+The analogy is only a loose one, though, since the BBR operating
+points are calculated differently, and are 2-dimensional (bw,inflight)
+rather than CUBIC's one-dimensional notion of operating point
+(inflight).
+
+o It uses the three-part model to adapt the magnitude of its bandwidth
+to match the estimated space available in the buffer, rather than (as
+in BBR v1) assuming that it was always acceptable to place 0.25*BDP in
+the bottleneck buffer when probing (commodity datacenter switches
+commonly do not have that much buffer for WAN flows). When BBR v2
+estimates it hit a buffer limit during probing, its bandwidth probing
+then starts gently in case little space is still available in the
+buffer, and the accelerates, slowly at first and then rapidly if it
+can grow inflight without seeing congestion signals. In such cases,
+probing is bounded by inflight_hi + inflight_probe, where
+inflight_probe grows as: [0, 1, 2, 4, 8, 16,...]. This allows BBR to
+keep losses low and bounded if a bottleneck remains congested, while
+rapidly/scalably utilizing free bandwidth when it becomes available.
+
+o It has a slightly revised state machine, to achieve the goals above.
+    BBR_BW_PROBE_UP:    pushes up inflight to probe for bw/vol
+    BBR_BW_PROBE_DOWN:  drain excess inflight from the queue
+    BBR_BW_PROBE_CRUISE: use pipe, w/ headroom in queue/pipe
+    BBR_BW_PROBE_REFILL: try refill the pipe again to 100%, leaving queue empty
+
+o The estimated BDP: BBR v2 continues to maintain an estimate of the
+path's two-way propagation delay, by tracking a windowed min_rtt, and
+coordinating (on an as-ndeeded basis) to try to expose the two-way
+propagation delay by draining the bottleneck queue.
+
+BBR v2 continues to use its min_rtt and (currently-applicable) bandwidth
+estimate to estimate the current bandwidth-delay product. The estimated BDP
+still provides one important guideline for bounding inflight data. However,
+because any min-filtered RTT and max-filtered bw inherently tend to both
+overestimate, the estimated BDP is often too high; in this case loss or ECN
+marks can ensue, in which case BBR v2 adjusts inflight_hi and inflight_lo to
+adapt its sending rate and inflight down to match the available capacity of the
+path.
+
+o Space: Note that ICSK_CA_PRIV_SIZE increased. This is because BBR v2
+requires more space. Note that much of the space is due to support for
+per-socket parameterization and debugging in this release for research
+and debugging. With that state removed, the full "struct bbr" is 140
+bytes, or 144 with padding. This is an increase of 40 bytes over the
+existing ca_priv space.
+
+o Code: BBR v2 reuses many pieces from BBR v1. But it omits the following
+  significant pieces:
+
+  o "packet conservation" (bbr_set_cwnd_to_recover_or_restore(),
+    bbr_can_grow_inflight())
+  o long-term bandwidth estimator ("policer mode")
+
+  The code layout tries to keep BBR v2 code near the bottom of the
+  file, so that v1-applicable code in the top does not accidentally
+  refer to v2 code.
+
+o Docs:
+  See the following docs for more details and diagrams decsribing the BBR v2
+  algorithm:
+    https://datatracker.ietf.org/meeting/104/materials/slides-104-iccrg-an-update-on-bbr-00
+    https://datatracker.ietf.org/meeting/102/materials/slides-102-iccrg-an-update-on-bbr-work-at-google-00
+
+o Internal notes:
+  For this upstream rebase, Neal started from:
+    git show fed518041ac6:net/ipv4/tcp_bbr.c > net/ipv4/tcp_bbr.c
+  then removed dev instrumentation (dynamic get/set for parameters)
+  and code that was only used by BBRv1
+
+Effort: net-tcp_bbr
+Origin-9xx-SHA1: 2c84098e60bed6d67dde23cd7538c51dee273102
+Change-Id: I125cf26ba2a7a686f2fa5e87f4c2afceb65f7a05
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ include/net/inet_connection_sock.h |    5 +-
+ include/uapi/linux/inet_diag.h     |   33 +
+ net/ipv4/Kconfig                   |   22 +
+ net/ipv4/Makefile                  |    1 +
+ net/ipv4/tcp_bbr2.c                | 2683 ++++++++++++++++++++++++++++
+ 5 files changed, 2742 insertions(+), 2 deletions(-)
+ create mode 100644 net/ipv4/tcp_bbr2.c
+
+--- a/include/net/inet_connection_sock.h
++++ b/include/net/inet_connection_sock.h
+@@ -134,9 +134,10 @@ struct inet_connection_sock {
+ 	u32			  icsk_probes_tstamp;
+ 	u32			  icsk_user_timeout;
+ 
+-	u64			  icsk_ca_priv[104 / sizeof(u64)];
+-#define ICSK_CA_PRIV_SIZE	  sizeof_field(struct inet_connection_sock, icsk_ca_priv)
+-};
++	/* XXX inflated by temporary internal debugging info */
++#define ICSK_CA_PRIV_SIZE      (216)
++	u64			  icsk_ca_priv[ICSK_CA_PRIV_SIZE / sizeof(u64)];
++ };
+ 
+ #define ICSK_TIME_RETRANS	1	/* Retransmit timer */
+ #define ICSK_TIME_DACK		2	/* Delayed ack timer */
+--- a/include/uapi/linux/inet_diag.h
++++ b/include/uapi/linux/inet_diag.h
+@@ -231,9 +231,42 @@ struct tcp_bbr_info {
+ 	__u32	bbr_cwnd_gain;		/* cwnd gain shifted left 8 bits */
+ };
+ 
++/* Phase as reported in netlink/ss stats. */
++enum tcp_bbr2_phase {
++	BBR2_PHASE_INVALID		= 0,
++	BBR2_PHASE_STARTUP		= 1,
++	BBR2_PHASE_DRAIN		= 2,
++	BBR2_PHASE_PROBE_RTT		= 3,
++	BBR2_PHASE_PROBE_BW_UP		= 4,
++	BBR2_PHASE_PROBE_BW_DOWN	= 5,
++	BBR2_PHASE_PROBE_BW_CRUISE	= 6,
++	BBR2_PHASE_PROBE_BW_REFILL	= 7
++};
++
++struct tcp_bbr2_info {
++	/* u64 bw: bandwidth (app throughput) estimate in Byte per sec: */
++	__u32	bbr_bw_lsb;		/* lower 32 bits of bw */
++	__u32	bbr_bw_msb;		/* upper 32 bits of bw */
++	__u32	bbr_min_rtt;		/* min-filtered RTT in uSec */
++	__u32	bbr_pacing_gain;	/* pacing gain shifted left 8 bits */
++	__u32	bbr_cwnd_gain;		/* cwnd gain shifted left 8 bits */
++	__u32	bbr_bw_hi_lsb;		/* lower 32 bits of bw_hi */
++	__u32	bbr_bw_hi_msb;		/* upper 32 bits of bw_hi */
++	__u32	bbr_bw_lo_lsb;		/* lower 32 bits of bw_lo */
++	__u32	bbr_bw_lo_msb;		/* upper 32 bits of bw_lo */
++	__u8	bbr_mode;		/* current bbr_mode in state machine */
++	__u8	bbr_phase;		/* current state machine phase */
++	__u8	unused1;		/* alignment padding; not used yet */
++	__u8	bbr_version;		/* MUST be at this offset in struct */
++	__u32	bbr_inflight_lo;	/* lower/short-term data volume bound */
++	__u32	bbr_inflight_hi;	/* higher/long-term data volume bound */
++	__u32	bbr_extra_acked;	/* max excess packets ACKed in epoch */
++};
++
+ union tcp_cc_info {
+ 	struct tcpvegas_info	vegas;
+ 	struct tcp_dctcp_info	dctcp;
+ 	struct tcp_bbr_info	bbr;
++	struct tcp_bbr2_info	bbr2;
+ };
+ #endif /* _UAPI_INET_DIAG_H_ */
+--- a/net/ipv4/Kconfig
++++ b/net/ipv4/Kconfig
+@@ -669,6 +669,24 @@ config TCP_CONG_BBR
+ 	  AQM schemes that do not provide a delay signal. It requires the fq
+ 	  ("Fair Queue") pacing packet scheduler.
+ 
++config TCP_CONG_BBR2
++	tristate "BBR2 TCP"
++	default n
++	help
++
++	BBR2 TCP congestion control is a model-based congestion control
++	algorithm that aims to maximize network utilization, keep queues and
++	retransmit rates low, and to be able to coexist with Reno/CUBIC in
++	common scenarios. It builds an explicit model of the network path.  It
++	tolerates a targeted degree of random packet loss and delay that are
++	unrelated to congestion. It can operate over LAN, WAN, cellular, wifi,
++	or cable modem links, and can use DCTCP-L4S-style ECN signals.  It can
++	coexist with flows that use loss-based congestion control, and can
++	operate with shallow buffers, deep buffers, bufferbloat, policers, or
++	AQM schemes that do not provide a delay signal. It requires pacing,
++	using either TCP internal pacing or the fq ("Fair Queue") pacing packet
++	scheduler.
++
+ choice
+ 	prompt "Default TCP congestion control"
+ 	default DEFAULT_CUBIC
+@@ -706,6 +724,9 @@ choice
+ 	config DEFAULT_BBR
+ 		bool "BBR" if TCP_CONG_BBR=y
+ 
++	config DEFAULT_BBR2
++		bool "BBR2" if TCP_CONG_BBR2=y
++
+ 	config DEFAULT_RENO
+ 		bool "Reno"
+ endchoice
+@@ -730,6 +751,7 @@ config DEFAULT_TCP_CONG
+ 	default "dctcp" if DEFAULT_DCTCP
+ 	default "cdg" if DEFAULT_CDG
+ 	default "bbr" if DEFAULT_BBR
++	default "bbr2" if DEFAULT_BBR2
+ 	default "cubic"
+ 
+ config TCP_MD5SIG
+--- a/net/ipv4/Makefile
++++ b/net/ipv4/Makefile
+@@ -46,6 +46,7 @@ obj-$(CONFIG_INET_TCP_DIAG) += tcp_diag.
+ obj-$(CONFIG_INET_UDP_DIAG) += udp_diag.o
+ obj-$(CONFIG_INET_RAW_DIAG) += raw_diag.o
+ obj-$(CONFIG_TCP_CONG_BBR) += tcp_bbr.o
++obj-$(CONFIG_TCP_CONG_BBR2) += tcp_bbr2.o
+ obj-$(CONFIG_TCP_CONG_BIC) += tcp_bic.o
+ obj-$(CONFIG_TCP_CONG_CDG) += tcp_cdg.o
+ obj-$(CONFIG_TCP_CONG_CUBIC) += tcp_cubic.o
+--- /dev/null
++++ b/net/ipv4/tcp_bbr2.c
+@@ -0,0 +1,2683 @@
